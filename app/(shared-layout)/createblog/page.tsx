@@ -1,4 +1,5 @@
 "use client"
+import { createBlogAction } from "@/app/actions";
 import { postSchema } from "@/app/schemas/blog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,15 +7,21 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "@/convex/_generated/api";
-import { mutation } from "@/convex/_generated/server";
+
+
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "convex/react";
+
+import { Loader2 } from "lucide-react";
+
+import { useTransition } from "react";
 import { Controller,useForm } from "react-hook-form";
+    
 import z from "zod";
 
 export default function BlogPost(){
-    const mutation=useMutation(api.posts.createPost);
+   
+      const [isPending,startTransition]=useTransition();
+  
     const form=useForm({
         resolver:zodResolver(postSchema),
         defaultValues:{
@@ -24,11 +31,19 @@ export default function BlogPost(){
     });
 
     function onSubmit(values:z.infer<typeof postSchema>){
-            mutation({
-                body :values.content,
-                title:values.title
+        startTransition(async ()=>{
 
-            })
+            // mutation({
+            //     body :values.content,
+            //     title:values.title
+                
+            // })
+            // toast.success("EveryThink was fine")
+            
+            await createBlogAction(values);
+            
+            
+        })
     }
     return(
         <div className='p-12'>
@@ -80,7 +95,15 @@ export default function BlogPost(){
               )}
             
             />
-                        <Button>Create Post</Button>
+                        <Button disabled={isPending}>{isPending?(
+                <>
+                    <Loader2 className="size-4 animate-spin"/>
+                    <span>Loading...</span>
+                </>
+            ):(
+                <span>Create Blog</span>
+            )}
+            </Button>
                     </FieldGroup>
                 </form>
             </CardContent>
